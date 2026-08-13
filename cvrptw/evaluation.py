@@ -98,12 +98,6 @@ def is_route_feasible(instance: Instance, route: list[int]) -> bool:
 def is_feasible(instance: Instance, solution: Solution) -> bool:
     """whether a whole solution is feasible
 
-    1 coverage every customer (indices 1 to instance.size - 1) is visited
-      exactly once across all routes none missing none duplicated
-
-    2 every route is feasible according to is_route_feasible capacity and
-      time windows
-
     instance: the problem instance
     solution: the candidate solution
 
@@ -116,7 +110,7 @@ def is_feasible(instance: Instance, solution: Solution) -> bool:
     if sorted(visited) != expected:
         return False
 
-    # and every route on its own has to be feasible
+    # every route is feasible
     for route in solution.routes:
         if not is_route_feasible(instance, route):
             return False
