@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+
+# Gurobi (no subir la licencia)
+*.lic
+gurobi.log
+
+# Resultados y cachés
+results/
+.pytest_cache/
+.ipynb_checkpoints/
+
+# Editores / SO
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
