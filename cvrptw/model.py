@@ -25,8 +25,8 @@ class Node:
     index: position of the node in the instance (0 = depot).
     x, y: planar coordinates (used for Euclidean distance/time).
     demand: quantity to deliver (0 for the depot).
-    ready_time: earliest time service may start (time window opens).
-    due_time: latest time service may start (time window closes).
+    start_time: earliest time service may start (time window opens).
+    end_time: latest time service may start (time window closes).
     service_time: time spent servicing the node.
     """
 
@@ -36,16 +36,16 @@ class Node:
         x: float,
         y: float,
         demand: float,
-        ready_time: float,
-        due_time: float,
+        start_time: float,
+        end_time: float,
         service_time: float,
     ) -> None:
         self.index = index
         self.x = x
         self.y = y
         self.demand = demand
-        self.ready_time = ready_time
-        self.due_time = due_time
+        self.start_time = start_time
+        self.end_time = end_time
         self.service_time = service_time
 
     @property
@@ -55,8 +55,8 @@ class Node:
     def __repr__(self) -> str:
         return (
             f"Node(index={self.index}, x={self.x}, y={self.y}, "
-            f"demand={self.demand}, ready_time={self.ready_time}, "
-            f"due_time={self.due_time}, service_time={self.service_time})"
+            f"demand={self.demand}, start_time={self.start_time}, "
+            f"end_time={self.end_time}, service_time={self.service_time})"
         )
 
 
@@ -142,7 +142,11 @@ class Solution:
     @property
     def visited_customers(self) -> list[int]:
         """Flat list of all customer indices across all routes."""
-        return [c for route in self.routes for c in route]
+        resultado = []
+        for route in self.routes:
+            for c in route:
+                resultado.append(c)
+        return resultado
 
     def __repr__(self) -> str:
         return f"Solution(num_vehicles={self.num_vehicles}, routes={self.routes})"
