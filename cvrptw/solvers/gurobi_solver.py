@@ -4,7 +4,6 @@ builds the milp model with pyomo and solves it with gurobi
 same formulation as the notebook notebooks/gurobi_cvrptw.ipynb
 """
 
-from __future__ import annotations
 
 import pyomo.environ as pe
 import pyomo.opt as po
@@ -43,7 +42,8 @@ def solve(instance: Instance, verbose: bool = False) -> Solution:
     customer_links = [(i, j) for (i, j) in links if j != 0]
 
     # big-M (the worst case of the time constraint)
-    M = max(b[i] for i in nodes) + max(s[i] for i in nodes) + max(c[i][j] for (i, j) in links)
+    M = max(b[i] for i in nodes) + max(s[i]
+                                       for i in nodes) + max(c[i][j] for (i, j) in links)
 
     model = pe.ConcreteModel('cvrptw')
 
