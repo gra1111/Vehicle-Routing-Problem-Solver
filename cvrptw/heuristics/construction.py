@@ -18,13 +18,15 @@ def best_node_insertion(instance: Instance, route: list[int], customer_idx: int)
     base = route_distance(instance, route)
     base_demand = route_demand(instance, route)
 
+    # if new demand is lower or equal to vehicle capacity node cannot be inserted in the route
+    if base_demand + instance.nodes[customer_idx].demand <= instance.vehicle_capacity:
+        return None
     best = None
     for i in range(len(route) + 1):
-        if base_demand + instance.nodes[customer_idx].demand <= instance.vehicle_capacity:
-            new_route = route[:i] + [customer_idx] + route[i:]
-            extra = route_distance(instance, new_route) - base
-            if best is None or extra < best[1]:
-                best = (i, extra)
+        new_route = route[:i] + [customer_idx] + route[i:]
+        extra = route_distance(instance, new_route) - base
+        if best is None or extra < best[1]:
+            best = (i, extra)
     return best
 
 
