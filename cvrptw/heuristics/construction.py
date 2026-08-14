@@ -38,4 +38,30 @@ def build_initial_solution(instance: Instance) -> Solution:
     Returns
     a feasible complete solution
     """
-    return None
+    nodes = list(range(1, instance.size))
+    routes = []
+
+    while nodes:
+        # start the route with the farder node from the depot
+        further = nodes[0]
+        for i in nodes:
+            if instance.distance(0, i) > instance.distance(0, further):
+                further = i
+        route = [further]
+        nodes.remove(further)
+
+        # keep inserting nodes with the cheapest distance cost
+        while node_pick != None:
+            node_pick = None
+            for i in nodes:
+                result = best_node_insertion(instance, route, i)
+                if result is not None:
+                    pos, extra = result
+                    if node_pick is None or extra < node_pick[2]:
+                        node_pick = (i, pos, extra)
+            i, pos, extra = node_pick
+            route.insert(pos, i)
+            nodes.remove(i)
+        routes.append(route)
+
+    return Solution(instance, routes)
