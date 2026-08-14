@@ -2,7 +2,7 @@
 """
 
 from cvrptw.model import Instance, Solution
-from cvrptw.evaluation import route_demand, route_distance
+from cvrptw.evaluation import is_route_feasible, route_distance
 
 
 def best_node_insertion(instance: Instance, route: list[int], customer_idx: int):
@@ -16,17 +16,14 @@ def best_node_insertion(instance: Instance, route: list[int], customer_idx: int)
     (position, extra_cost) or None if the customer does not fit anywhere
     """
     base = route_distance(instance, route)
-    base_demand = route_demand(instance, route)
 
-    # if the new demand exceeds the vehicle capacity the node cannot be inserted
-    if base_demand + instance.nodes[customer_idx].demand > instance.vehicle_capacity:
-        return None
     best = None
     for i in range(len(route) + 1):
         new_route = route[:i] + [customer_idx] + route[i:]
-        extra = route_distance(instance, new_route) - base
-        if best is None or extra < best[1]:
-            best = (i, extra)
+        if is_route_feasible(instance, new_route):
+            extra = route_distance(instance, new_route) - base
+            if best is None or extra < best[1]:
+                best = (i, extra)
     return best
 
 
