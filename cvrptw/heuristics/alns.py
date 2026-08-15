@@ -25,6 +25,54 @@ def random_removal(routes, n, rng_state):
     return removed_routes, removed
 
 
+def worst_removal(instance, routes, n, rng):
+    """remove the n customers that add the most distance to their route
+
+    for each customer compute its detour d(prev, c) + d(c, next) - d(prev, next)
+    where prev and next are its neighbours in the route (the depot 0 at the ends)
+    then remove the ones with the largest detour a small random factor avoids
+    always removing exactly the same customers
+    do not mutate the input routes work on a copy
+
+    instance: the problem instance
+    routes: current routes (list of lists of customer indices)
+    n: how many customers to remove
+    rng: a random.Random instance for reproducibility
+
+    Returns
+    (pruned_routes, removed) the routes without those customers and the removed list
+    """
+
+    # detour each costumer makes to the route
+    costs = []
+    for route in routes:
+        for node_pos in range(len(route)):
+            node = route[node_pos]
+            if node_pos >= 1:
+                prev = route[node_pos - 1]
+            else:
+                prev = 0
+            if node_pos < len(route) - 1:
+                nxt = route[node_pos + 1]
+            else:
+                nxt = 0
+            node_cost = instance.distance(
+                prev, node) + instance.distance(node, nxt) - instance.distance(prev, nxt)
+            costs.append((node_cost, node))
+    costs.sort(reverse=True)
+
+    # p to biass the index towards 0 (worst nodes)
+    p = 3
+    removed = []
+    for _ in range(n):
+        index = int(rng.random() ** p * len(costs))
+        removed.append(costs.pop(index)[1])
+
+    removed_routes = [[c for c in route if c not in removed]
+                      for route in routes]
+    return removed_routes, removed
+
+
 def greedy_repair(instance, routes, removed):
     """reinsert the removed customers with a greedy aproach
 

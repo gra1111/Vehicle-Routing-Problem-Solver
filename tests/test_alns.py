@@ -4,7 +4,7 @@ import random
 
 from cvrptw.parser import parse_solomon
 from cvrptw.heuristics.construction import build_initial_solution
-from cvrptw.heuristics.alns import random_removal, greedy_repair, solve
+from cvrptw.heuristics.alns import random_removal, worst_removal, greedy_repair, solve
 
 
 def flat_customers(routes):
@@ -24,6 +24,19 @@ def test_random_removal():
 
     assert sorted(flat_customers(pruned) + removed) == before
 
+    assert flat_customers(initial.routes) == before
+
+
+def test_worst_removal():
+    instance = parse_solomon('data/solomon/c101.txt')
+    initial = build_initial_solution(instance)
+    rng = random.Random(0)
+
+    before = flat_customers(initial.routes)
+    pruned, removed = worst_removal(instance, initial.routes, 5, rng)
+
+    assert len(removed) == 5
+    assert sorted(flat_customers(pruned) + removed) == before
     assert flat_customers(initial.routes) == before
 
 
