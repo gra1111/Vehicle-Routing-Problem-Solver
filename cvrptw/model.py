@@ -150,12 +150,12 @@ class Solution:
 
     def distance(self) -> float:
         """total travelled distance over all the routes"""
-        from cvrptw.evaluation import route_distance
+        from cvrptw.evaluation import route_distance  # import here to avoid circular imports
         return sum(route_distance(self.instance, route) for route in self.routes)
 
     def is_feasible(self) -> bool:
         """whether every customer is visited once and every route is feasible"""
-        from cvrptw.evaluation import is_route_feasible
+        from cvrptw.evaluation import is_route_feasible  # import here to avoid circular imports
         expected = list(range(1, self.instance.size))
         if sorted(self.visited_customers) != expected:
             return False
