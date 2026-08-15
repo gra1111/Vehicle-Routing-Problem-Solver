@@ -3,7 +3,6 @@
 import random
 
 from cvrptw.parser import parse_solomon
-from cvrptw.evaluation import is_feasible, solution_distance
 from cvrptw.heuristics.construction import build_initial_solution
 from cvrptw.heuristics.alns import random_removal, greedy_repair, solve
 
@@ -45,12 +44,10 @@ def test_solve():
     best = solve(instance, 100, 20, 0)
 
     # feasible and complete
-    assert is_feasible(instance, best) is True
+    assert best.is_feasible() is True
     assert flat_customers(best.routes) == list(range(1, instance.size))
     # improves or ties the construction
-    assert solution_distance(
-        instance, best) <= solution_distance(instance, initial)
+    assert best.distance() <= initial.distance()
     # deterministic with seed
     again = solve(instance, 100, 20, 0)
-    assert solution_distance(
-        instance, best) == solution_distance(instance, again)
+    assert best.distance() == again.distance()

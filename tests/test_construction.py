@@ -3,7 +3,6 @@
 from cvrptw.parser import parse_solomon
 from cvrptw.model import Node, Instance
 from cvrptw.heuristics.construction import build_initial_solution, best_node_insertion
-from cvrptw.evaluation import is_feasible
 
 
 def test_build_initial_solution():
@@ -13,7 +12,7 @@ def test_build_initial_solution():
     # covers every customer exactly once
     assert sorted(solution.visited_customers) == list(range(1, instance.size))
     # feasibility
-    assert is_feasible(instance, solution) is True
+    assert solution.is_feasible() is True
 
 
 def test_best_node_insertion():

@@ -148,5 +148,21 @@ class Solution:
                 resultado.append(c)
         return resultado
 
+    def distance(self) -> float:
+        """total travelled distance over all the routes"""
+        from cvrptw.evaluation import route_distance
+        return sum(route_distance(self.instance, route) for route in self.routes)
+
+    def is_feasible(self) -> bool:
+        """whether every customer is visited once and every route is feasible"""
+        from cvrptw.evaluation import is_route_feasible
+        expected = list(range(1, self.instance.size))
+        if sorted(self.visited_customers) != expected:
+            return False
+        for route in self.routes:
+            if not is_route_feasible(self.instance, route):
+                return False
+        return True
+
     def __repr__(self) -> str:
         return f"Solution(num_vehicles={self.num_vehicles}, routes={self.routes})"

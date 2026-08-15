@@ -9,7 +9,7 @@ TODO (M1): implement the empty functions below.
 
 from __future__ import annotations
 
-from cvrptw.model import Instance, Solution
+from cvrptw.model import Instance
 
 
 def route_distance(instance: Instance, route: list[int]) -> float:
@@ -29,18 +29,6 @@ def route_distance(instance: Instance, route: list[int]) -> float:
     d += instance.distances[route[-1]][0]
 
     return d
-
-
-def solution_distance(instance: Instance, solution: Solution) -> float:
-    """Total travelled distance of a whole solution.
-
-    instance: the problem instance.
-    solution: the candidate solution (set of routes).
-
-    Returns
-    The total distance across all routes.
-    """
-    return sum(route_distance(instance, route) for route in solution.routes)
 
 
 def route_demand(instance: Instance, route: list[int]) -> float:
@@ -91,28 +79,5 @@ def is_route_feasible(instance: Instance, route: list[int]) -> bool:
     back_to_depot = time + instance.travel_time(prev, 0)
     if back_to_depot > instance.depot.end_time:
         return False
-
-    return True
-
-
-def is_feasible(instance: Instance, solution: Solution) -> bool:
-    """whether a whole solution is feasible
-
-    instance: the problem instance
-    solution: the candidate solution
-
-    Returns
-    true if the solution satisfies coverage and all per route constraints
-    """
-    # every customer visisted exactly once
-    visited = solution.visited_customers
-    expected = list(range(1, instance.size))
-    if sorted(visited) != expected:
-        return False
-
-    # every route is feasible
-    for route in solution.routes:
-        if not is_route_feasible(instance, route):
-            return False
 
     return True

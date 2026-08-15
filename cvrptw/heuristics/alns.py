@@ -3,7 +3,6 @@
 
 import random
 from cvrptw.model import Instance, Solution
-from cvrptw.evaluation import solution_distance
 from cvrptw.heuristics.construction import build_initial_solution, best_node_insertion
 
 
@@ -80,6 +79,6 @@ def solve(instance, iterations=1000, n=20, seed=0):
             current_solution.routes, n, rng_state)
         candidate_routes = greedy_repair(instance, removed_routes, removed)
         candidate_solution = Solution(instance, candidate_routes)
-        if solution_distance(instance, candidate_solution) < solution_distance(instance, current_solution):
+        if candidate_solution.distance() < current_solution.distance():
             current_solution = candidate_solution
     return current_solution
