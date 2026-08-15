@@ -17,7 +17,7 @@ This repo implements and compares different approaches under the same conditions
 
 - [x] **M1 — Data & validation** Solomon parser, data model, cost + feasibility validators
 - [x] **M2 — Gurobi MILP solver** 
-- [Currently_working] **M3 — Custom ALNS**
+- [WIP] **M3 — Custom ALNS**
 - [ ] **M4 — Industry solvers**
 - [ ] **M5 — Experiments & analysis** 
 
