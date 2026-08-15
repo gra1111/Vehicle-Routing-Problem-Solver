@@ -6,36 +6,26 @@ from cvrptw.heuristics.construction import build_initial_solution, best_node_ins
 from cvrptw.evaluation import is_feasible
 
 
-def test_covers_all_customers_once():
+def test_build_initial_solution():
     instance = parse_solomon('data/solomon/c101.txt')
     solution = build_initial_solution(instance)
 
-    visited = sorted(solution.visited_customers)
-    expected = list(range(1, instance.size))
-    assert visited == expected
-
-
-def test_feasible():
-    instance = parse_solomon('data/solomon/c101.txt')
-    solution = build_initial_solution(instance)
-
+    # covers every customer exactly once
+    assert sorted(solution.visited_customers) == list(range(1, instance.size))
+    # feasibility
     assert is_feasible(instance, solution) is True
 
 
-def test_best_insertion_empty_route():
+def test_best_node_insertion():
     instance = parse_solomon('data/solomon/c101.txt')
 
+    # empty route scenario
     result = best_node_insertion(instance, [], 1)
-
     assert result is not None
     position, _ = result
     assert position == 0
 
-
-def test_rejects_best_insertion():
     nodes = [Node(0, 0, 0, 0, 0, 100, 0), Node(
         1, 1, 0, 8, 0, 100, 0), Node(2, 2, 0, 8, 0, 100, 0)]
-    instance = Instance('test_rejects_best_insertion', 10, nodes)
-    result = best_node_insertion(instance, [1], 2)
-
-    assert result is None
+    toy = Instance('test_rejects_best_insertion', 10, nodes)
+    assert best_node_insertion(toy, [1], 2) is None
