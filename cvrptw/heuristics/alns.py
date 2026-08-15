@@ -61,7 +61,7 @@ def worst_removal(instance, routes, n, rng):
             costs.append((node_cost, node))
     costs.sort(reverse=True)
 
-    # p to biass the index towards 0 (worst nodes)
+    # p to biass the index towards 0 (worst nodes) (formula from Ropke & Pisinger)
     p = 3
     removed = []
     for _ in range(n):
