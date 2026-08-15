@@ -2,7 +2,7 @@
 
 Solving the CVRPTW and comparing different methods: an exact MILP model (Pyomo + Gurobi), a custom ALNS metaheuristic and an industry solver 
 
-> Personal project, in active development. Not affiliated with any university course.
+> Personal project, in active development.
 
 ## Problem description
 
@@ -16,12 +16,12 @@ This repo implements and compares different approaches under the same conditions
 ## Status / roadmap
 
 - [x] **M1 — Data & validation** Solomon parser, data model, cost + feasibility validators
-- [x] **M2 — Gurobi MILP solver** 
-[WIP] **M3 — Custom ALNS**
+- [x] **M2 — Gurobi MILP solver**
+- [ ] **M3 — Custom ALNS** — 🚧 *in progress*
 - [ ] **M4 — Industry solvers**
 - [ ] **M5 — Experiments & analysis** 
 
-Progress is tracked using [issues] and [milestones].
+Progress is tracked in the [issues] and [milestones].
 
 ## A first result
 
