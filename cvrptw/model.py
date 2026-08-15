@@ -106,11 +106,11 @@ class Instance:
         return matrix
 
     def distance(self, i: int, j: int) -> float:
-        """Euclidean distance between node ``i`` and node ``j``."""
+        """Euclidean distance between node i and node j."""
         return self.distances[i][j]
 
     def travel_time(self, i: int, j: int) -> float:
-        """Travel time between node ``i`` and node ``j``.
+        """Travel time between node i and node j.
 
         In the Solomon benchmarks travel time equals distance.
         """

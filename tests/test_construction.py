@@ -27,5 +27,5 @@ def test_best_node_insertion():
 
     nodes = [Node(0, 0, 0, 0, 0, 100, 0), Node(
         1, 1, 0, 8, 0, 100, 0), Node(2, 2, 0, 8, 0, 100, 0)]
-    toy = Instance('test_rejects_best_insertion', 10, nodes)
-    assert best_node_insertion(toy, [1], 2) is None
+    instance_rejects = Instance('test_rejects_best_insertion', 10, nodes)
+    assert best_node_insertion(instance_rejects, [1], 2) is None

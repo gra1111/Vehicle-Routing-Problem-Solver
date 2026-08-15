@@ -56,3 +56,30 @@ def greedy_repair(instance, routes, removed):
             best_route.insert(best_pos[0], removed_customer)
 
     return best_routes
+
+
+def solve(instance, iterations=1000, n=20, seed=0):
+    """solve a cvrptw instance with alns
+
+    starts from the greedy construction and repeats destroy plus repair keeping
+    the best solution found a candidate is accepted only if it is better than
+    the current solution
+
+    instance: the problem instance
+    iterations: how many destroy plus repair rounds to run
+    n: how many customers to remove each round
+    seed: seed for reproducibility
+
+    Returns
+    the best Solution found
+    """
+    rng_state = random.Random(seed)
+    current_solution = build_initial_solution(instance)
+    for _ in range(iterations):
+        removed_routes, removed = random_removal(
+            current_solution.routes, n, rng_state)
+        candidate_routes = greedy_repair(instance, removed_routes, removed)
+        candidate_solution = Solution(instance, candidate_routes)
+        if solution_distance(instance, candidate_solution) < solution_distance(instance, current_solution):
+            current_solution = candidate_solution
+    return current_solution

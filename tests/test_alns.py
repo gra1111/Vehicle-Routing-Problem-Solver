@@ -42,7 +42,7 @@ def test_greedy_repair():
 def test_solve():
     instance = parse_solomon('data/solomon/c101.txt')
     initial = build_initial_solution(instance)
-    best = solve(instance, iterations=100, k=20, seed=0)
+    best = solve(instance, 100, 20, 0)
 
     # feasible and complete
     assert is_feasible(instance, best) is True
@@ -51,6 +51,6 @@ def test_solve():
     assert solution_distance(
         instance, best) <= solution_distance(instance, initial)
     # deterministic with seed
-    again = solve(instance, iterations=100, k=20, seed=0)
+    again = solve(instance, 100, 20, 0)
     assert solution_distance(
         instance, best) == solution_distance(instance, again)
