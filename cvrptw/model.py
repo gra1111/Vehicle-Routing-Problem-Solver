@@ -106,11 +106,11 @@ class Instance:
         return matrix
 
     def distance(self, i: int, j: int) -> float:
-        """Euclidean distance between node ``i`` and node ``j``."""
+        """Euclidean distance between node i and node j."""
         return self.distances[i][j]
 
     def travel_time(self, i: int, j: int) -> float:
-        """Travel time between node ``i`` and node ``j``.
+        """Travel time between node i and node j.
 
         In the Solomon benchmarks travel time equals distance.
         """
@@ -147,6 +147,22 @@ class Solution:
             for c in route:
                 resultado.append(c)
         return resultado
+
+    def distance(self) -> float:
+        """total travelled distance over all the routes"""
+        from cvrptw.evaluation import route_distance  # import here to avoid circular imports
+        return sum(route_distance(self.instance, route) for route in self.routes)
+
+    def is_feasible(self) -> bool:
+        """whether every customer is visited once and every route is feasible"""
+        from cvrptw.evaluation import is_route_feasible  # import here to avoid circular imports
+        expected = list(range(1, self.instance.size))
+        if sorted(self.visited_customers) != expected:
+            return False
+        for route in self.routes:
+            if not is_route_feasible(self.instance, route):
+                return False
+        return True
 
     def __repr__(self) -> str:
         return f"Solution(num_vehicles={self.num_vehicles}, routes={self.routes})"
