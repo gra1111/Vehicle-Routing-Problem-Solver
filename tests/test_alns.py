@@ -3,8 +3,9 @@
 import random
 
 from cvrptw.parser import parse_solomon
+from cvrptw.model import Solution
 from cvrptw.heuristics.construction import build_initial_solution
-from cvrptw.heuristics.alns import random_removal, worst_removal, greedy_repair, solve
+from cvrptw.heuristics.alns import random_removal, worst_removal, greedy_repair, regret_repair, solve
 
 
 def flat_customers(routes):
@@ -49,6 +50,18 @@ def test_greedy_repair():
     repaired = greedy_repair(instance, pruned, removed)
 
     assert flat_customers(repaired) == list(range(1, instance.size))
+
+
+def test_regret():
+    instance = parse_solomon('data/solomon/c101.txt')
+    initial = build_initial_solution(instance)
+    rng = random.Random(0)
+
+    pruned, removed = random_removal(initial.routes, 5, rng)
+    repaired = regret_repair(instance, pruned, removed)
+
+    assert flat_customers(repaired) == list(range(1, instance.size))
+    assert Solution(instance, repaired).is_feasible() is True
 
 
 def test_solve():

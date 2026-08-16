@@ -2,7 +2,7 @@
 """
 
 import random
-from cvrptw.model import Instance, Solution
+from cvrptw.model import Solution
 from cvrptw.heuristics.construction import build_initial_solution, best_node_insertion
 
 
@@ -103,6 +103,54 @@ def greedy_repair(instance, routes, removed):
             best_route.insert(best_pos[0], removed_customer)
 
     return best_routes
+
+
+def regret_repair(instance, routes, removed):
+    """reinsert the removed customers using the regret criterion
+
+    for each removed customer look at its cheapest insertion in every route
+    the regret is the difference between its second best route cost and its
+    best route cost insert first the customer with the largest regret at its
+    best position a customer that only fits in one route gets a very high
+    regret and one that fits nowhere opens a new route
+    repeat until every removed customer is placed
+
+    instance: the problem instance
+    routes: the routes after the customers removal
+    removed: the customers to add
+
+    Returns
+    the repaired routes
+    """
+    while removed != []:
+        best_to_include = None  # (route, node, difference, pos)
+        for node in removed:
+            best = None
+            second_best = None
+            for route in routes:
+                best_insertion = best_node_insertion(instance, route, node)
+                if best_insertion != None:
+                    pos, extra_cost = best_insertion
+                    if best == None:
+                        best = (pos, extra_cost, route)
+                    elif extra_cost >= best[1] or second_best == None:
+                        second_best = best
+                        best = (pos, extra_cost, route)
+            if second_best == None:
+                # if second_best is None best is also None (high priority to include)
+                if best == None:
+                    routes.append([node])
+                else:
+                    best[2].insert(best[0], node)
+                removed.remove(node)
+                break
+            difference = best[1]-second_best[1]
+            if best_to_include == None or best_to_include[2] < difference:
+                best_to_include = (best[2], node, difference, best[0])
+        if best_to_include != None:
+            best_to_include[0].insert(best_to_include[3], best_to_include[1])
+            removed.remove(best_to_include[1])
+    return routes
 
 
 def solve(instance, iterations=1000, n=20, seed=0):
