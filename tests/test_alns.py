@@ -3,7 +3,7 @@
 import random
 
 from cvrptw.parser import parse_solomon
-from cvrptw.model import Solution
+from cvrptw.model import Node, Instance, Solution
 from cvrptw.heuristics.construction import build_initial_solution
 from cvrptw.heuristics.alns import random_removal, worst_removal, greedy_repair, regret_repair, solve
 
@@ -53,6 +53,7 @@ def test_greedy_repair():
 
 
 def test_regret():
+    # on a real instance: coverage + feasibility
     instance = parse_solomon('data/solomon/c101.txt')
     initial = build_initial_solution(instance)
     rng = random.Random(0)
@@ -62,6 +63,17 @@ def test_regret():
 
     assert flat_customers(repaired) == list(range(1, instance.size))
     assert Solution(instance, repaired).is_feasible() is True
+
+    depot = Node(0, 0, 0, 0, 0, 1000, 0)
+    n1 = Node(1, 10, 0, 1, 0, 1000, 0)
+    n2 = Node(2, 11, 0, 1, 0, 1000, 0)
+    n3 = Node(3, 0, 10, 1, 0, 1000, 0)
+    n4 = Node(4, 0, 11, 1, 0, 1000, 0)
+    toy = Instance('test_regret', 100, [depot, n1, n2, n3, n4])
+
+    repaired = regret_repair(toy, [[1], [3, 4]], [2])
+    route_with_2 = next(route for route in repaired if 2 in route)
+    assert 1 in route_with_2
 
 
 def test_solve():

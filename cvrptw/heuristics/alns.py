@@ -131,11 +131,11 @@ def regret_repair(instance, routes, removed):
                 best_insertion = best_node_insertion(instance, route, node)
                 if best_insertion != None:
                     pos, extra_cost = best_insertion
-                    if best == None:
-                        best = (pos, extra_cost, route)
-                    elif extra_cost >= best[1] or second_best == None:
+                    if best == None or extra_cost < best[1]:
                         second_best = best
                         best = (pos, extra_cost, route)
+                    elif second_best == None or extra_cost < second_best[1]:
+                        second_best = (pos, extra_cost, route)
             if second_best == None:
                 # if second_best is None best is also None (high priority to include)
                 if best == None:
@@ -144,7 +144,7 @@ def regret_repair(instance, routes, removed):
                     best[2].insert(best[0], node)
                 removed.remove(node)
                 break
-            difference = best[1]-second_best[1]
+            difference = second_best[1]-best[1]
             if best_to_include == None or best_to_include[2] < difference:
                 best_to_include = (best[2], node, difference, best[0])
         if best_to_include != None:
