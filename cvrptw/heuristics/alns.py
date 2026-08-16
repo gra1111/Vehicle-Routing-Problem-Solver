@@ -1,6 +1,7 @@
 """adaptive large neighborhood search
 """
 
+import numpy as np
 import random
 from cvrptw.model import Solution
 from cvrptw.heuristics.construction import build_initial_solution, best_node_insertion
@@ -157,10 +158,6 @@ def regret_repair(instance, routes, removed):
 def solve(instance, iterations=1000, n=20, seed=0):
     """solve a cvrptw instance with alns
 
-    starts from the greedy construction and repeats destroy plus repair keeping
-    the best solution found a candidate is accepted only if it is better than
-    the current solution
-
     instance: the problem instance
     iterations: how many destroy plus repair rounds to run
     n: how many customers to remove each round
@@ -171,19 +168,34 @@ def solve(instance, iterations=1000, n=20, seed=0):
     """
     weights = [[0.5, 0.5], [
         0.5, 0.5]]  # [greedy_repair_wight, regret_repair_weight], [random_removal_weight, worst_removal_weight]
+    destroy_functions = [random_removal, worst_removal]
+    repair_functions = [greedy_repair, regret_repair]
 
     rng_state = random.Random(seed)
     current_solution = build_initial_solution(instance)
+    best_solution = current_solution
+
+    # T and coling for simulated annealing formula
+    T = current_solution.distance() * 0.05
+    coling = 0.995
     for _ in range(iterations):
         removal_choice = rng_state.choices(
-            [random_removal, worst_removal], weights[1])[0]
-        removed_routes, removed = removal_choice(
+            [0, 1], weights[1])[0]
+        removed_routes, removed = destroy_functions[removal_choice](
             instance, current_solution.routes, n, rng_state)
 
         repair_choice = rng_state.choices(
-            [greedy_repair, regret_repair], weights[0])[0]
-        candidate_routes = repair_choice(instance, removed_routes, removed)
+            [0, 1], weights[0])[0]
+        candidate_routes = repair_functions[repair_choice](
+            instance, removed_routes, removed)
         candidate_solution = Solution(instance, candidate_routes)
-        if candidate_solution.distance() < current_solution.distance():
+
+        # simulated annealing
+        delta = candidate_solution.distance() - current_solution.distance()
+        acceptance_value = np.exp(-delta / T)
+        if delta < 0 or rng_state.random() < acceptance_value:
             current_solution = candidate_solution
-    return current_solution
+        if current_solution.distance() < best_solution.distance():
+            best_solution = current_solution
+        T *= coling
+    return best_solution
