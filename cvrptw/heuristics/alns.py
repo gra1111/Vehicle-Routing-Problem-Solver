@@ -6,9 +6,10 @@ from cvrptw.model import Solution
 from cvrptw.heuristics.construction import build_initial_solution, best_node_insertion
 
 
-def random_removal(routes, n, rng_state):
+def random_removal(instance, routes, n, rng_state):
     """remove n random customers from the routes
 
+    instance: the problem instance (not actually used, just to allign with worst_removal inputs)
     routes: current routes (list of lists of customer indices)
     n: how many customers to remove
     rng_state: a random.Random object for reproducibility
@@ -168,12 +169,20 @@ def solve(instance, iterations=1000, n=20, seed=0):
     Returns
     the best Solution found
     """
+    weights = [[0.5, 0.5], [
+        0.5, 0.5]]  # [greedy_repair_wight, regret_repair_weight], [random_removal_weight, worst_removal_weight]
+
     rng_state = random.Random(seed)
     current_solution = build_initial_solution(instance)
     for _ in range(iterations):
-        removed_routes, removed = random_removal(
-            current_solution.routes, n, rng_state)
-        candidate_routes = greedy_repair(instance, removed_routes, removed)
+        removal_choice = rng_state.choices(
+            [random_removal, worst_removal], weights[1])[0]
+        removed_routes, removed = removal_choice(
+            instance, current_solution.routes, n, rng_state)
+
+        repair_choice = rng_state.choices(
+            [greedy_repair, regret_repair], weights[0])[0]
+        candidate_routes = repair_choice(instance, removed_routes, removed)
         candidate_solution = Solution(instance, candidate_routes)
         if candidate_solution.distance() < current_solution.distance():
             current_solution = candidate_solution
