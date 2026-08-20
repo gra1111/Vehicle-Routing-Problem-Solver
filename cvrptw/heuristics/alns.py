@@ -155,16 +155,17 @@ def regret_repair(instance, routes, removed):
     return routes
 
 
-def solve(instance, iterations=1000, n=20, seed=0):
+def solve(instance, iterations=1000, n=20, seed=0, early_stopping_n=30):
     """solve a cvrptw instance with alns
 
     instance: the problem instance
     iterations: how many destroy plus repair rounds to run
     n: how many customers to remove each round
     seed: seed for reproducibility
+    early_stopping_n: stop early after this many iterations without a new best
 
     Returns
-    the best Solution found
+    (best Solution found, iteration where the search stopped)
     """
     weights = [[0.5, 0.5], [
         0.5, 0.5]]  # [greedy_repair_wight, regret_repair_weight], [random_removal_weight, worst_removal_weight]
@@ -191,6 +192,10 @@ def solve(instance, iterations=1000, n=20, seed=0):
     # T and coling for simulated annealing formula
     T = current_solution.distance() * 0.05
     coling = 0.995
+
+    # early stopping
+    no_improve = 0
+    stopped_at = iterations
     for i in range(iterations):
         removal_choice = rng_state.choices(
             [0, 1], weights[1])[0]
@@ -208,10 +213,12 @@ def solve(instance, iterations=1000, n=20, seed=0):
             points = points_1
             current_solution = candidate_solution
             best_solution = candidate_solution
+            no_improve = 0
         # reward for being beter that the current solution but not better than the best so far
         elif candidate_solution.distance() < current_solution.distance():
             points = points_3
             current_solution = candidate_solution
+            no_improve += 1
         else:
             # simulated annealing
             delta = candidate_solution.distance() - current_solution.distance()
@@ -223,6 +230,7 @@ def solve(instance, iterations=1000, n=20, seed=0):
             else:
                 # 0 reward for being discarded
                 points = 0
+            no_improve += 1
 
         scores[1][removal_choice] += points
         counts[1][removal_choice] += 1
@@ -239,4 +247,9 @@ def solve(instance, iterations=1000, n=20, seed=0):
                             (scores[prob][operator] / counts[prob][operator])
                     scores[prob][operator] = 0
                     counts[prob][operator] = 0
-    return best_solution
+
+        # early stopping
+        if no_improve >= early_stopping_n:
+            stopped_at = i + 1
+            break
+    return best_solution, stopped_at

@@ -79,13 +79,16 @@ def test_regret():
 def test_solve():
     instance = parse_solomon('data/solomon/c101.txt')
     initial = build_initial_solution(instance)
-    best = solve(instance, 100, 20, 0)
+    best, stopped_at = solve(instance, 100, 20, 0)
 
     # feasible and complete
     assert best.is_feasible() is True
     assert flat_customers(best.routes) == list(range(1, instance.size))
     # improves or ties the construction
     assert best.distance() <= initial.distance()
+    # the search stops within the budget
+    assert stopped_at <= 100
     # deterministic with seed
-    again = solve(instance, 100, 20, 0)
+    again, stopped_again = solve(instance, 100, 20, 0)
     assert best.distance() == again.distance()
+    assert stopped_at == stopped_again
