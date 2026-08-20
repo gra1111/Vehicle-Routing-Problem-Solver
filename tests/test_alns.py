@@ -18,7 +18,7 @@ def test_random_removal():
     rng = random.Random(0)
 
     before = flat_customers(initial.routes)
-    pruned, removed = random_removal(initial.routes, 5, rng)
+    pruned, removed = random_removal(instance, initial.routes, 5, rng)
 
     # removes exactly n
     assert len(removed) == 5
@@ -46,7 +46,7 @@ def test_greedy_repair():
     initial = build_initial_solution(instance)
     rng = random.Random(0)
 
-    pruned, removed = random_removal(initial.routes, 5, rng)
+    pruned, removed = random_removal(instance, initial.routes, 5, rng)
     repaired = greedy_repair(instance, pruned, removed)
 
     assert flat_customers(repaired) == list(range(1, instance.size))
@@ -58,7 +58,7 @@ def test_regret():
     initial = build_initial_solution(instance)
     rng = random.Random(0)
 
-    pruned, removed = random_removal(initial.routes, 5, rng)
+    pruned, removed = random_removal(instance, initial.routes, 5, rng)
     repaired = regret_repair(instance, pruned, removed)
 
     assert flat_customers(repaired) == list(range(1, instance.size))
