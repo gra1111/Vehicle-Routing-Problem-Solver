@@ -171,14 +171,27 @@ def solve(instance, iterations=1000, n=20, seed=0):
     destroy_functions = [random_removal, worst_removal]
     repair_functions = [greedy_repair, regret_repair]
 
+    # [greedy_repair_wight, regret_repair_weight], [random_removal_weight, worst_removal_weight]
+    scores = [[0.0, 0.0], [0.0, 0.0]]
+
+    # [greedy_repair_wight, regret_repair_weight], [random_removal_weight, worst_removal_weight]
+    counts = [[0, 0], [0, 0]]
+    points_1 = 3
+    points_2 = 2
+    points_3 = 1
+
     rng_state = random.Random(seed)
     current_solution = build_initial_solution(instance)
     best_solution = current_solution
 
+    # number of iterations to update weights and percentage of the new weight to keep
+    iterations_update = 100
+    new_percentage = 15
+
     # T and coling for simulated annealing formula
     T = current_solution.distance() * 0.05
     coling = 0.995
-    for _ in range(iterations):
+    for i in range(iterations):
         removal_choice = rng_state.choices(
             [0, 1], weights[1])[0]
         removed_routes, removed = destroy_functions[removal_choice](
@@ -190,12 +203,40 @@ def solve(instance, iterations=1000, n=20, seed=0):
             instance, removed_routes, removed)
         candidate_solution = Solution(instance, candidate_routes)
 
-        # simulated annealing
-        delta = candidate_solution.distance() - current_solution.distance()
-        acceptance_value = np.exp(-delta / T)
-        if delta < 0 or rng_state.random() < acceptance_value:
+        # reward for being the best solution so far
+        if candidate_solution.distance() < best_solution.distance():
+            points = points_1
             current_solution = candidate_solution
-        if current_solution.distance() < best_solution.distance():
-            best_solution = current_solution
+            best_solution = candidate_solution
+        # reward for being beter that the current solution but not better than the best so far
+        elif candidate_solution.distance() < current_solution.distance():
+            points = points_3
+            current_solution = candidate_solution
+        else:
+            # simulated annealing
+            delta = candidate_solution.distance() - current_solution.distance()
+            acceptance_value = np.exp(-delta / T)
+            # reaward for being chosen even if the solution is not better than the current solution
+            if rng_state.random() < acceptance_value:
+                points = points_2
+                current_solution = candidate_solution
+            else:
+                # 0 reward for being discarded
+                points = 0
+
+        scores[1][removal_choice] += points
+        counts[1][removal_choice] += 1
+        scores[0][repair_choice] += points
+        counts[0][repair_choice] += 1
         T *= coling
+        if (i + 1) % iterations_update == 0:
+            # run through both repair and update and the 2 operators inside each
+            for prob in range(2):
+                for operator in range(2):
+                    if counts[prob][operator] > 0:  # avoid divisions by 0
+                        weights[prob][operator] = (100 - new_percentage)/100 * weights[prob][operator] + \
+                            new_percentage/100 * \
+                            (scores[prob][operator] / counts[prob][operator])
+                    scores[prob][operator] = 0
+                    counts[prob][operator] = 0
     return best_solution
