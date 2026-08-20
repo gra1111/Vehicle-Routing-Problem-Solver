@@ -206,6 +206,8 @@ def solve(instance, iterations=1000, n=20, seed=0, early_stopping_n=30):
             [0, 1], weights[0])[0]
         candidate_routes = repair_functions[repair_choice](
             instance, removed_routes, removed)
+        # drop empty routes so the vehicle count stays honest
+        candidate_routes = [route for route in candidate_routes if route]
         candidate_solution = Solution(instance, candidate_routes)
 
         # reward for being the best solution so far

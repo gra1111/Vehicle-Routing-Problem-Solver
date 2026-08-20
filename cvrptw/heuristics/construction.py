@@ -2,7 +2,7 @@
 """
 
 from cvrptw.model import Instance, Solution
-from cvrptw.evaluation import is_route_feasible, route_distance
+from cvrptw.evaluation import is_route_feasible
 
 
 def best_node_insertion(instance: Instance, route: list[int], customer_idx: int):
