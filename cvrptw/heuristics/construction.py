@@ -15,13 +15,15 @@ def best_node_insertion(instance: Instance, route: list[int], customer_idx: int)
     Returns
     (position, extra_cost) or None if the customer does not fit anywhere
     """
-    base = route_distance(instance, route)
 
     best = None
     for i in range(len(route) + 1):
         new_route = route[:i] + [customer_idx] + route[i:]
         if is_route_feasible(instance, new_route):
-            extra = route_distance(instance, new_route) - base
+            previous_node = route[i - 1] if i > 0 else 0
+            next_node = route[i] if i < len(route) else 0
+            extra = (instance.distance(previous_node, customer_idx) + instance.distance(
+                customer_idx, next_node) - instance.distance(previous_node, next_node))
             if best is None or extra < best[1]:
                 best = (i, extra)
     return best
