@@ -182,7 +182,8 @@ def regret_repair(instance, routes, removed):
     return routes
 
 
-def solve(instance, iterations=1000, n=20, seed=0, early_stopping_n=30):
+def solve(instance, iterations=1000, n=25, seed=0, early_stopping_n=150,
+          t_factor=0.1, coling=0.995, new_percentage=15, iterations_update=100):
     """solve a cvrptw instance with alns
 
     instance: the problem instance
@@ -190,6 +191,10 @@ def solve(instance, iterations=1000, n=20, seed=0, early_stopping_n=30):
     n: how many customers to remove each round
     seed: seed for reproducibility
     early_stopping_n: stop early after this many iterations without a new best
+    t_factor: initial temperature as a fraction of the initial distance
+    coling: cooling rate for the simulated annealing
+    new_percentage: reaction factor for the adaptive weights (0-100)
+    iterations_update: iterations between weight updates
 
     Returns
     (best Solution found, iteration where the search stopped)
@@ -212,13 +217,7 @@ def solve(instance, iterations=1000, n=20, seed=0, early_stopping_n=30):
     current_solution = build_initial_solution(instance)
     best_solution = current_solution
 
-    # number of iterations to update weights and percentage of the new weight to keep
-    iterations_update = 100
-    new_percentage = 15
-
-    # T and coling for simulated annealing formula
-    T = current_solution.distance() * 0.05
-    coling = 0.995
+    T = current_solution.distance() * t_factor
 
     # early stopping
     no_improve = 0
