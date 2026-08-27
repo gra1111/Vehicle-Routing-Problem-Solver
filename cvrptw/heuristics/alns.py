@@ -124,34 +124,61 @@ def regret_repair(instance, routes, removed):
     Returns
     the repaired routes
     """
+    # a table thatstores the best insertion of each node in each route to reduce computation time
+    best_insertions = {node: [best_node_insertion(instance, route, node) for route in routes]
+                       for node in removed}
     while removed != []:
-        best_to_include = None  # (route, node, difference, pos)
+        best_to_include = None  # (route_index, node, difference, pos)
+        node_to_place = None
+        route_index_changed = None
         for node in removed:
             best = None
             second_best = None
-            for route in routes:
-                best_insertion = best_node_insertion(instance, route, node)
+            for route_index in range(len(routes)):
+                best_insertion = best_insertions[node][route_index]
                 if best_insertion != None:
                     pos, extra_cost = best_insertion
                     if best == None or extra_cost < best[1]:
                         second_best = best
-                        best = (pos, extra_cost, route)
+                        best = (pos, extra_cost, route_index)
                     elif second_best == None or extra_cost < second_best[1]:
-                        second_best = (pos, extra_cost, route)
+                        second_best = (pos, extra_cost, route_index)
             if second_best == None:
                 # if second_best is None best is also None (high priority to include)
                 if best == None:
                     routes.append([node])
+                    route_index_changed = None  # None means open a new route
                 else:
-                    best[2].insert(best[0], node)
-                removed.remove(node)
+                    routes[best[2]].insert(best[0], node)
+                    route_index_changed = best[2]
+                node_to_place = node
                 break
             difference = second_best[1]-best[1]
             if best_to_include == None or best_to_include[2] < difference:
                 best_to_include = (best[2], node, difference, best[0])
-        if best_to_include != None:
-            best_to_include[0].insert(best_to_include[3], best_to_include[1])
-            removed.remove(best_to_include[1])
+
+        # if node_to_place is None it means it didnt break previous loop so nobody has been already placed
+        if node_to_place is None and best_to_include is not None:
+            route_index_changed = best_to_include[0]
+            node_to_place = best_to_include[1]
+            routes[route_index_changed].insert(
+                best_to_include[3], node_to_place)
+
+        removed.remove(node_to_place)
+        del best_insertions[node_to_place]
+
+        # update the memorarization list
+        # new route was oppened
+        if route_index_changed is None:
+            for node in removed:
+                best_insertions[node].append(
+                    best_node_insertion(instance, routes[len(routes) - 1], node))
+        # old route updated
+        else:
+            for node in removed:
+                best_insertions[node][route_index_changed] = best_node_insertion(
+                    instance, routes[route_index_changed], node)
+
     return routes
 
 
