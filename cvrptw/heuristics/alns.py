@@ -1,14 +1,16 @@
 """adaptive large neighborhood search
 """
 
+import numpy as np
 import random
-from cvrptw.model import Instance, Solution
+from cvrptw.model import Solution
 from cvrptw.heuristics.construction import build_initial_solution, best_node_insertion
 
 
-def random_removal(routes, n, rng_state):
+def random_removal(instance, routes, n, rng_state):
     """remove n random customers from the routes
 
+    instance: the problem instance (not actually used, just to allign with worst_removal inputs)
     routes: current routes (list of lists of customer indices)
     n: how many customers to remove
     rng_state: a random.Random object for reproducibility
@@ -105,28 +107,177 @@ def greedy_repair(instance, routes, removed):
     return best_routes
 
 
-def solve(instance, iterations=1000, n=20, seed=0):
-    """solve a cvrptw instance with alns
+def regret_repair(instance, routes, removed):
+    """reinsert the removed customers using the regret criterion
 
-    starts from the greedy construction and repeats destroy plus repair keeping
-    the best solution found a candidate is accepted only if it is better than
-    the current solution
+    for each removed customer look at its cheapest insertion in every route
+    the regret is the difference between its second best route cost and its
+    best route cost insert first the customer with the largest regret at its
+    best position a customer that only fits in one route gets a very high
+    regret and one that fits nowhere opens a new route
+    repeat until every removed customer is placed
+
+    instance: the problem instance
+    routes: the routes after the customers removal
+    removed: the customers to add
+
+    Returns
+    the repaired routes
+    """
+    # a table thatstores the best insertion of each node in each route to reduce computation time
+    best_insertions = {node: [best_node_insertion(instance, route, node) for route in routes]
+                       for node in removed}
+    while removed != []:
+        best_to_include = None  # (route_index, node, difference, pos)
+        node_to_place = None
+        route_index_changed = None
+        for node in removed:
+            best = None
+            second_best = None
+            for route_index in range(len(routes)):
+                best_insertion = best_insertions[node][route_index]
+                if best_insertion != None:
+                    pos, extra_cost = best_insertion
+                    if best == None or extra_cost < best[1]:
+                        second_best = best
+                        best = (pos, extra_cost, route_index)
+                    elif second_best == None or extra_cost < second_best[1]:
+                        second_best = (pos, extra_cost, route_index)
+            if second_best == None:
+                # if second_best is None best is also None (high priority to include)
+                if best == None:
+                    routes.append([node])
+                    route_index_changed = None  # None means open a new route
+                else:
+                    routes[best[2]].insert(best[0], node)
+                    route_index_changed = best[2]
+                node_to_place = node
+                break
+            difference = second_best[1]-best[1]
+            if best_to_include == None or best_to_include[2] < difference:
+                best_to_include = (best[2], node, difference, best[0])
+
+        # if node_to_place is None it means it didnt break previous loop so nobody has been already placed
+        if node_to_place is None and best_to_include is not None:
+            route_index_changed = best_to_include[0]
+            node_to_place = best_to_include[1]
+            routes[route_index_changed].insert(
+                best_to_include[3], node_to_place)
+
+        removed.remove(node_to_place)
+        del best_insertions[node_to_place]
+
+        # update the memorarization list
+        # new route was oppened
+        if route_index_changed is None:
+            for node in removed:
+                best_insertions[node].append(
+                    best_node_insertion(instance, routes[len(routes) - 1], node))
+        # old route updated
+        else:
+            for node in removed:
+                best_insertions[node][route_index_changed] = best_node_insertion(
+                    instance, routes[route_index_changed], node)
+
+    return routes
+
+
+def solve(instance, iterations=1000, n=30, seed=0, early_stopping_n=150,
+          t_factor=0.1, coling=0.995, new_percentage=15, iterations_update=100):
+    """solve a cvrptw instance with alns
 
     instance: the problem instance
     iterations: how many destroy plus repair rounds to run
     n: how many customers to remove each round
     seed: seed for reproducibility
+    early_stopping_n: stop early after this many iterations without a new best
+    t_factor: initial temperature as a fraction of the initial distance
+    coling: cooling rate for the simulated annealing
+    new_percentage: reaction factor for the adaptive weights (0-100)
+    iterations_update: iterations between weight updates
 
     Returns
-    the best Solution found
+    (best Solution found, iteration where the search stopped)
     """
+    weights = [[0.5, 0.5], [
+        0.5, 0.5]]  # [greedy_repair_wight, regret_repair_weight], [random_removal_weight, worst_removal_weight]
+    destroy_functions = [random_removal, worst_removal]
+    repair_functions = [greedy_repair, regret_repair]
+
+    # [greedy_repair_wight, regret_repair_weight], [random_removal_weight, worst_removal_weight]
+    scores = [[0.0, 0.0], [0.0, 0.0]]
+
+    # [greedy_repair_wight, regret_repair_weight], [random_removal_weight, worst_removal_weight]
+    counts = [[0, 0], [0, 0]]
+    points_1 = 3
+    points_2 = 2
+    points_3 = 1
+
     rng_state = random.Random(seed)
     current_solution = build_initial_solution(instance)
-    for _ in range(iterations):
-        removed_routes, removed = random_removal(
-            current_solution.routes, n, rng_state)
-        candidate_routes = greedy_repair(instance, removed_routes, removed)
+    best_solution = current_solution
+
+    T = current_solution.distance() * t_factor
+
+    # early stopping
+    no_improve = 0
+    stopped_at = iterations
+    for i in range(iterations):
+        removal_choice = rng_state.choices(
+            [0, 1], weights[1])[0]
+        removed_routes, removed = destroy_functions[removal_choice](
+            instance, current_solution.routes, n, rng_state)
+
+        repair_choice = rng_state.choices(
+            [0, 1], weights[0])[0]
+        candidate_routes = repair_functions[repair_choice](
+            instance, removed_routes, removed)
+        # drop empty routes so the vehicle count stays honest
+        candidate_routes = [route for route in candidate_routes if route]
         candidate_solution = Solution(instance, candidate_routes)
-        if candidate_solution.distance() < current_solution.distance():
+
+        # reward for being the best solution so far
+        if candidate_solution.distance() < best_solution.distance():
+            points = points_1
             current_solution = candidate_solution
-    return current_solution
+            best_solution = candidate_solution
+            no_improve = 0
+        # reward for being beter that the current solution but not better than the best so far
+        elif candidate_solution.distance() < current_solution.distance():
+            points = points_3
+            current_solution = candidate_solution
+            no_improve += 1
+        else:
+            # simulated annealing
+            delta = candidate_solution.distance() - current_solution.distance()
+            acceptance_value = np.exp(-delta / T)
+            # reaward for being chosen even if the solution is not better than the current solution
+            if rng_state.random() < acceptance_value:
+                points = points_2
+                current_solution = candidate_solution
+            else:
+                # 0 reward for being discarded
+                points = 0
+            no_improve += 1
+
+        scores[1][removal_choice] += points
+        counts[1][removal_choice] += 1
+        scores[0][repair_choice] += points
+        counts[0][repair_choice] += 1
+        T *= coling
+        if (i + 1) % iterations_update == 0:
+            # run through both repair and update and the 2 operators inside each
+            for prob in range(2):
+                for operator in range(2):
+                    if counts[prob][operator] > 0:  # avoid divisions by 0
+                        weights[prob][operator] = (100 - new_percentage)/100 * weights[prob][operator] + \
+                            new_percentage/100 * \
+                            (scores[prob][operator] / counts[prob][operator])
+                    scores[prob][operator] = 0
+                    counts[prob][operator] = 0
+
+        # early stopping
+        if no_improve >= early_stopping_n:
+            stopped_at = i + 1
+            break
+    return best_solution, stopped_at
