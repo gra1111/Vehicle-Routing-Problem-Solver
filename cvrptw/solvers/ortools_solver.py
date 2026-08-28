@@ -89,7 +89,7 @@ def solve(instance: Instance, num_vehicles=None, time_limit=5) -> Solution:
 
     params = pywrapcp.DefaultRoutingSearchParameters()
     params.first_solution_strategy = (
-        routing_enums_pb2.FirstSolutionStrategy.PATH_CHEAPEST_ARC)
+        routing_enums_pb2.FirstSolutionStrategy.PARALLEL_CHEAPEST_INSERTION)
     params.local_search_metaheuristic = (
         routing_enums_pb2.LocalSearchMetaheuristic.GUIDED_LOCAL_SEARCH)
     params.time_limit.FromSeconds(time_limit)
