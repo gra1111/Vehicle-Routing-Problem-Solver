@@ -182,7 +182,7 @@ def regret_repair(instance, routes, removed):
     return routes
 
 
-def solve(instance, iterations=1000, n=25, seed=0, early_stopping_n=150,
+def solve(instance, iterations=1000, n=30, seed=0, early_stopping_n=150,
           t_factor=0.1, coling=0.995, new_percentage=15, iterations_update=100):
     """solve a cvrptw instance with alns
 
